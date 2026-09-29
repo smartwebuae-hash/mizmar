@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>استوديو مزمار — تسجيل التلاوة والأناشيد</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--lapis:#1C3A5E;--gold:#B8913A;--gold-soft:#E3CF9C;--madder:#8C3B3B;--page:#0F1F1A;--ink:#D9E6DC;--muted:#8FA89A;--panel:#16291F;--line:#23392D;--hl:rgba(212,180,106,.16)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--page);color:var(--ink);min-height:100vh}
+button,select,input{font-family:inherit;font-size:14px;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+header{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
+.brand{font-family:'Reem Kufi';font-size:26px;font-weight:700;color:var(--gold)}
+.brand small{display:block;font-family:'IBM Plex Sans Arabic';font-size:11px;font-weight:400;color:var(--muted);margin-top:-4px}
+.grow{flex:1}
+.ibtn{border:1px solid var(--line);background:transparent;border-radius:10px;padding:8px 14px;cursor:pointer;text-decoration:none;display:inline-flex;gap:6px;align-items:center}
+.ibtn:hover{border-color:var(--gold)}
+.ibtn.gold{background:var(--gold);border-color:var(--gold);color:#1a140a;font-weight:600}
+.ibtn:disabled{opacity:.4;cursor:not-allowed}
+
+.wrap{max-width:1100px;margin:0 auto;padding:22px 18px 60px;display:grid;grid-template-columns:1fr 340px;gap:22px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+h2{font-family:'Reem Kufi';font-weight:500;font-size:19px;color:var(--gold);margin-bottom:12px}
+
+/* recorder — the one bold element */
+.rec{display:flex;flex-direction:column;align-items:center;gap:14px;padding:26px 10px 20px;text-align:center}
+.mic{width:120px;height:120px;border-radius:50%;border:3px solid var(--gold);background:radial-gradient(circle,#2a3d31 0,#16291F 70%);cursor:pointer;display:grid;place-items:center;position:relative;transition:transform .15s}
+.mic:active{transform:scale(.96)}
+.mic svg{width:46px;height:46px;fill:var(--gold)}
+.mic.on{border-color:var(--madder);background:radial-gradient(circle,#5a2525 0,#2a1616 70%)}
+.mic.on svg{fill:#f2d4d4}
+.mic .ring{position:absolute;inset:-10px;border-radius:50%;border:2px solid var(--madder);opacity:0;transform:scale(calc(1 + var(--lv,0)*.35));transition:transform .08s}
+.mic.on .ring{opacity:.7}
+.timer{font-size:28px;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.hint{color:var(--muted);font-size:13px;line-height:1.8;max-width:460px}
+.opts{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;font-size:13px;color:var(--muted)}
+.opts label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.opts input{accent-color:var(--gold)}
+
+.wave{position:relative;height:120px;margin:16px 0 10px;border-radius:10px;background:#0c1914;border:1px solid var(--line);cursor:pointer;overflow:hidden}
+.wave canvas{width:100%;height:100%;display:block}
+.transport{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.transport .t{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;margin-inline-start:auto}
+.play{width:46px;height:46px;border-radius:50%;border:0;background:var(--gold);color:#1a140a;font-size:18px;cursor:pointer}
+.ab{display:flex;gap:6px;border:1px solid var(--line);border-radius:10px;padding:3px}
+.ab button{border:0;background:transparent;padding:6px 12px;border-radius:8px;cursor:pointer;color:var(--muted)}
+.ab button.on{background:var(--hl);color:var(--gold)}
+
+.takes{margin-top:18px}
+.take{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.take.on{background:var(--hl);border-radius:8px}
+.take b{font-weight:500;flex:1;cursor:pointer}
+.take small{color:var(--muted)}
+.take button{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:4px 8px}
+.empty{color:var(--muted);font-size:13px;padding:10px 0;line-height:1.8}
+
+/* presets */
+.presets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+.pre{border:1px solid var(--line);border-radius:10px;background:transparent;padding:10px 4px;cursor:pointer;font-size:13px}
+.pre.on{border-color:var(--gold);background:var(--hl);color:var(--gold)}
+.ctl{padding:10px 0;border-top:1px solid var(--line)}
+.ctl:first-of-type{border-top:0}
+.row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+.row span:last-child{color:var(--gold);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--gold)}
+.grp-t{font-size:12px;color:var(--muted);margin:14px 0 2px}
+.sw{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0}
+.sw input{width:18px;height:18px;accent-color:var(--gold)}
+.export{display:flex;gap:8px;margin-top:16px}
+.export .ibtn{flex:1;justify-content:center}
+.msg{margin-top:10px;font-size:13px;color:var(--gold-soft);min-height:20px}
+
+@media (max-width:860px){.wrap{grid-template-columns:1fr}.presets{grid-template-columns:repeat(3,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">استوديو مزمار<small>سجّل تلاوتك وأناشيدك</small></div>
+  <div class="grow"></div>
+  <a class="ibtn" href="index.html">العودة إلى المصحف</a>
+</header>
+
+<div class="wrap">
+  <div>
+    <section>
+      <div class="rec">
+        <button class="mic" id="mic" aria-label="بدء التسجيل">
+          <span class="ring"></span>
+          <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1A7 7 0 0 0 19 11h-2z"/></svg>
+        </button>
+        <div class="timer" id="timer">٠٠:٠٠</div>
+        <p class="hint" id="recHint">اضغط الميكروفون وابدأ التلاوة أو الإنشاد. اضغط مرة أخرى للإيقاف.</p>
+        <div class="opts">
+          <label><input type="checkbox" id="ns" checked> تقليل ضوضاء الغرفة</label>
+          <label><input type="file" id="file" accept="audio/*" hidden><span class="ibtn" onclick="document.getElementById('file').click()">رفع ملف صوتي</span></label>
+        </div>
+      </div>
+
+      <div class="wave" id="wave"><canvas id="cv"></canvas></div>
+      <div class="transport">
+        <button class="play" id="playBtn" aria-label="تشغيل">▶</button>
+        <button class="ibtn" id="stopBtn">إيقاف</button>
+        <div class="ab" role="group" aria-label="المقارنة">
+          <button class="on" data-ab="fx">مع الفلاتر</button>
+          <button data-ab="dry">الصوت الأصلي</button>
+        </div>
+        <span class="t" id="tm">٠:٠٠ / ٠:٠٠</span>
+      </div>
+
+      <div class="takes">
+        <h2>التسجيلات</h2>
+        <div id="takes"><p class="empty">لا توجد تسجيلات بعد. سجّل أول تلاوة لك وستظهر هنا، ويمكنك تسجيل أكثر من محاولة والمقارنة بينها.</p></div>
+      </div>
+    </section>
+  </div>
+
+  <section>
+    <h2>الفلاتر الصوتية</h2>
+    <div class="presets" id="presets"></div>
+
+    <p class="grp-t">نقاء الصوت</p>
+    <div class="ctl"><div class="row"><span>قطع الهمهمة المنخفضة</span><span id="v_hp"></span></div><input type="range" data-k="hp" min="20" max="300" step="5"></div>
+    <div class="ctl"><div class="row"><span>عمق الصوت (الجهير)</span><span id="v_bass"></span></div><input type="range" data-k="bass" min="-8" max="10" step="0.5"></div>
+    <div class="ctl"><div class="row"><span>وضوح الحروف</span><span id="v_clarity"></span></div><input type="range" data-k="clarity" min="-6" max="10" step="0.5"></div>
+    <div class="ctl"><div class="row"><span>لمعان الصوت</span><span id="v_air"></span></div><input type="range" data-k="air" min="-8" max="8" step="0.5"></div>
+    <div class="sw">توازن الصوت (ضاغط) <input type="checkbox" data-k="comp"></div>
+
+    <p class="grp-t">الصدى والفضاء</p>
+    <div class="ctl"><div class="row"><span>كمية الصدى المحيط</span><span id="v_rev"></span></div><input type="range" data-k="rev" min="0" max="0.7" step="0.01"></div>
+    <div class="ctl"><div class="row"><span>حجم المكان</span><span id="v_decay"></span></div><input type="range" data-k="decay" min="0.5" max="8" step="0.1"></div>
+    <div class="ctl"><div class="row"><span>تكرار الصدى</span><span id="v_echo"></span></div><input type="range" data-k="echo" min="0" max="0.6" step="0.01"></div>
+    <div class="ctl"><div class="row"><span>زمن التكرار</span><span id="v_echoT"></span></div><input type="range" data-k="echoT" min="0.1" max="0.9" step="0.01"></div>
+
+    <p class="grp-t">الإخراج</p>
+    <div class="ctl"><div class="row"><span>مستوى الصوت</span><span id="v_vol"></span></div><input type="range" data-k="vol" min="0.2" max="2" step="0.05"></div>
+    <div class="sw">بداية تدريجية <input type="checkbox" data-k="fadeIn"></div>
+    <div class="sw">نهاية تدريجية <input type="checkbox" data-k="fadeOut"></div>
+
+    <div class="export">
+      <button class="ibtn gold" id="expBtn" disabled>تنزيل بالفلاتر (WAV)</button>
+    </div>
+    <p class="msg" id="msg"></p>
+  </section>
+</div>
+
+<script>
+const ar=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+const fmt=s=>{s=Math.max(0,s);return ar(Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0'))};
+const $=s=>document.querySelector(s);
+
+/* ——— presets ——— */
+const PRESETS={
+  natural:{name:'طبيعي',hp:60,bass:0,clarity:0,air:0,comp:false,rev:0,decay:1.5,echo:0,echoT:.35},
+  studio:{name:'استوديو',hp:90,bass:1,clarity:3,air:2,comp:true,rev:.1,decay:1.2,echo:0,echoT:.3},
+  masjid:{name:'مسجد',hp:80,bass:2,clarity:2,air:1,comp:true,rev:.32,decay:3.5,echo:0,echoT:.3},
+  haram:{name:'الحرم',hp:80,bass:3,clarity:2.5,air:1.5,comp:true,rev:.42,decay:6,echo:.08,echoT:.45},
+  hall:{name:'قاعة',hp:80,bass:1.5,clarity:2,air:1,comp:true,rev:.24,decay:2.2,echo:0,echoT:.3},
+  nasheed:{name:'نشيد',hp:90,bass:2,clarity:3,air:3,comp:true,rev:.28,decay:2.8,echo:.12,echoT:.3},
+  mountain:{name:'صدى الجبل',hp:100,bass:0,clarity:2,air:1,comp:true,rev:.15,decay:2,echo:.35,echoT:.5},
+  warm:{name:'دافئ',hp:60,bass:5,clarity:1,air:-2,comp:true,rev:.15,decay:1.8,echo:0,echoT:.3},
+  radio:{name:'إذاعي',hp:250,bass:-4,clarity:6,air:-3,comp:true,rev:.05,decay:1,echo:0,echoT:.3}
+};
+const S={preset:'masjid',...PRESETS.masjid,vol:1,fadeIn:false,fadeOut:true};
+const units={hp:v=>ar(v)+' هرتز',bass:db,clarity:db,air:db,rev:pct,echo:pct,decay:v=>ar(v.toFixed(1))+' ث',echoT:v=>ar(v.toFixed(2))+' ث',vol:pct};
+function db(v){return (v>0?'+':'')+ar(v)+' ديسيبل'}
+function pct(v){return ar(Math.round(v*100))+'٪'}
+
+$('#presets').innerHTML=Object.entries(PRESETS).map(([k,p])=>`<button class="pre" data-p="${k}">${p.name}</button>`).join('');
+$('#presets').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;const {name,...p}=PRESETS[b.dataset.p];Object.assign(S,p,{preset:b.dataset.p});sync(true)};
+document.querySelectorAll('[data-k]').forEach(el=>el.oninput=()=>{
+  S[el.dataset.k]=el.type==='checkbox'?el.checked:+el.value;S.preset='';sync(el.dataset.k==='decay')});
+function sync(newIR){
+  document.querySelectorAll('.pre').forEach(b=>b.classList.toggle('on',b.dataset.p===S.preset));
+  document.querySelectorAll('[data-k]').forEach(el=>{const k=el.dataset.k;
+    if(el.type==='checkbox')el.checked=S[k];else{el.value=S[k];const o=$('#v_'+k);if(o)o.textContent=units[k](S[k])}});
+  if(live)setParams(live,ctx,newIR);
+}
+
+/* ——— audio graph ——— */
+let ctx;const AC=window.AudioContext||window.webkitAudioContext;
+function getCtx(){if(!ctx)ctx=new AC();if(ctx.state==='suspended')ctx.resume();return ctx}
+function impulse(c,sec){
+  const len=Math.floor(c.sampleRate*sec),b=c.createBuffer(2,len,c.sampleRate);
+  for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);
+    for(let i=0;i<len;i++){const t=i/len;d[i]=(Math.random()*2-1)*Math.pow(1-t,2.6)*(i<c.sampleRate*.012?i/(c.sampleRate*.012):1)}}
+  return b;
+}
+function buildChain(c,out){
+  const n={
+    hp:c.createBiquadFilter(),low:c.createBiquadFilter(),mid:c.createBiquadFilter(),high:c.createBiquadFilter(),
+    comp:c.createDynamicsCompressor(),dry:c.createGain(),conv:c.createConvolver(),wet:c.createGain(),
+    delay:c.createDelay(2),fb:c.createGain(),echo:c.createGain(),master:c.createGain(),fade:c.createGain()
+  };
+  n.hp.type='highpass';n.hp.Q.value=.7;
+  n.low.type='lowshelf';n.low.frequency.value=180;
+  n.mid.type='peaking';n.mid.frequency.value=3000;n.mid.Q.value=.9;
+  n.high.type='highshelf';n.high.frequency.value=8000;
+  n.comp.attack.value=.005;n.comp.release.value=.2;n.comp.knee.value=12;
+  n.hp.connect(n.low);n.low.connect(n.mid);n.mid.connect(n.high);n.high.connect(n.comp);
+  n.comp.connect(n.dry);n.dry.connect(n.master);
+  n.comp.connect(n.conv);n.conv.connect(n.wet);n.wet.connect(n.master);
+  n.comp.connect(n.delay);n.delay.connect(n.fb);n.fb.connect(n.delay);n.delay.connect(n.echo);n.echo.connect(n.master);
+  n.master.connect(n.fade);n.fade.connect(out);
+  n.input=n.hp;setParams(n,c,true);return n;
+}
+function setParams(n,c,newIR){
+  const t=c.currentTime,set=(p,v)=>p.setTargetAtTime(v,t,.02);
+  set(n.hp.frequency,S.hp);set(n.low.gain,S.bass);set(n.mid.gain,S.clarity);set(n.high.gain,S.air);
+  set(n.comp.threshold,S.comp?-24:0);set(n.comp.ratio,S.comp?3.5:1);
+  set(n.dry.gain,1-S.rev*.35);set(n.wet.gain,S.rev*1.4);
+  set(n.echo.gain,S.echo);set(n.fb.gain,Math.min(.35+S.echo*.4,.6));set(n.delay.delayTime,S.echoT);
+  set(n.master.gain,S.vol*(S.comp?1.25:1));
+  if(newIR)n.conv.buffer=impulse(c,S.decay);
+}
+
+/* ——— recording ——— */
+let rec=null,stream=null,chunks=[],t0=0,tick=null,meter=null;
+$('#mic').onclick=()=>rec?stopRec():startRec();
+async function startRec(){
+  const c=getCtx();stopPlay();
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,autoGainControl:false,noiseSuppression:$('#ns').checked}});
+  }catch(e){
+    $('#recHint').textContent='لم يُسمح باستخدام الميكروفون. اسمح للموقع باستخدامه من إعدادات المتصفح، أو ارفع ملفاً صوتياً مسجلاً من هاتفك.';return;
+  }
+  const an=c.createAnalyser();an.fftSize=512;c.createMediaStreamSource(stream).connect(an);
+  const buf=new Uint8Array(an.fftSize);
+  chunks=[];rec=new MediaRecorder(stream);
+  rec.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  rec.onstop=async()=>{
+    const blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'});rec=null;
+    stream.getTracks().forEach(t=>t.stop());
+    try{addTake(await c.decodeAudioData(await blob.arrayBuffer()),'تسجيل')}catch(e){$('#recHint').textContent='تعذّرت قراءة التسجيل. جرّب مرة أخرى.'}
+  };
+  rec.start();t0=performance.now();$('#mic').classList.add('on');
+  $('#recHint').textContent='جارٍ التسجيل… اضغط الميكروفون للإيقاف.';
+  tick=setInterval(()=>$('#timer').textContent=fmt((performance.now()-t0)/1000),250);
+  (function lv(){if(!rec)return;an.getByteTimeDomainData(buf);let m=0;for(const v of buf)m=Math.max(m,Math.abs(v-128));
+    $('#mic').style.setProperty('--lv',m/128);meter=requestAnimationFrame(lv)})();
+}
+function stopRec(){clearInterval(tick);cancelAnimationFrame(meter);$('#mic').classList.remove('on');$('#mic').style.setProperty('--lv',0);
+  $('#recHint').textContent='اضغط الميكروفون لتسجيل محاولة جديدة.';rec.stop()}
+$('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+  try{addTake(await getCtx().decodeAudioData(await f.arrayBuffer()),f.name.replace(/\.[^.]+$/,''))}
+  catch(err){$('#msg').textContent='هذا الملف غير مدعوم. جرّب ملف MP3 أو WAV أو M4A.'}e.target.value=''};
+
+/* ——— takes ——— */
+let takes=[],sel=-1,count=0;
+function addTake(buffer,label){count++;takes.unshift({name:label==='تسجيل'?`تسجيل ${ar(count)}`:label,buffer});select(0)}
+function renderTakes(){
+  $('#takes').innerHTML=takes.length?takes.map((t,i)=>`<div class="take ${i===sel?'on':''}">
+    <b onclick="select(${i})">${t.name}</b><small>${fmt(t.buffer.duration)}</small>
+    <button onclick="removeTake(${i})" aria-label="حذف">حذف</button></div>`).join('')
+    :'<p class="empty">لا توجد تسجيلات بعد. سجّل أول تلاوة لك وستظهر هنا.</p>';
+  $('#expBtn').disabled=sel<0;
+}
+function select(i){stopPlay();sel=i;offset=0;renderTakes();drawWave();updTime()}
+function removeTake(i){if(i===sel)stopPlay();takes.splice(i,1);sel=takes.length?0:-1;offset=0;renderTakes();drawWave();updTime()}
+
+/* ——— waveform ——— */
+const cv=$('#cv'),g=cv.getContext('2d');let peaks=null;
+function drawWave(){
+  const w=cv.width=cv.clientWidth*devicePixelRatio,h=cv.height=cv.clientHeight*devicePixelRatio;
+  g.clearRect(0,0,w,h);
+  if(sel<0){peaks=null;g.fillStyle='#8FA89A';g.font=`${13*devicePixelRatio}px IBM Plex Sans Arabic`;g.textAlign='center';g.fillText('سيظهر شكل الصوت هنا بعد التسجيل',w/2,h/2);return}
+  const d=takes[sel].buffer.getChannelData(0),step=Math.ceil(d.length/w);peaks=[];
+  for(let x=0;x<w;x++){let m=0;for(let i=x*step;i<(x+1)*step&&i<d.length;i+=4)m=Math.max(m,Math.abs(d[i]));peaks.push(m)}
+  const mx=Math.max(...peaks,.01);peaks=peaks.map(p=>p/mx);paint(0);
+}
+function paint(prog){
+  if(!peaks)return;const w=cv.width,h=cv.height;g.clearRect(0,0,w,h);
+  peaks.forEach((p,x)=>{const xr=w-x,bh=Math.max(1,p*h*.85);g.fillStyle=x/w<prog?'#D4B46A':'#3d5a4b';g.fillRect(xr-1,(h-bh)/2,1,bh)});
+}
+$('#wave').onclick=e=>{if(sel<0)return;const r=e.currentTarget.getBoundingClientRect();
+  const p=(r.right-e.clientX)/r.width;const was=playing;stopPlay();offset=p*takes[sel].buffer.duration;paint(p);updTime();if(was)play()};
+addEventListener('resize',drawWave);
+
+/* ——— playback ——— */
+let live=null,src=null,playing=false,offset=0,startAt=0,raf=null,mode='fx';
+document.querySelectorAll('[data-ab]').forEach(b=>b.onclick=()=>{mode=b.dataset.ab;
+  document.querySelectorAll('[data-ab]').forEach(x=>x.classList.toggle('on',x===b));if(playing){const o=pos();stopPlay();offset=o;play()}});
+function pos(){return playing?offset+(ctx.currentTime-startAt):offset}
+function play(){
+  if(sel<0)return;const c=getCtx(),buf=takes[sel].buffer;if(offset>=buf.duration)offset=0;
+  src=c.createBufferSource();src.buffer=buf;
+  if(mode==='fx'){live=buildChain(c,c.destination);src.connect(live.input)}else{live=null;src.connect(c.destination)}
+  src.start(0,offset);startAt=c.currentTime;playing=true;$('#playBtn').textContent='❚❚';
+  src.onended=()=>{if(playing&&pos()>=buf.duration-.05){stopPlay();offset=0;paint(0);updTime()}};
+  (function loop(){if(!playing)return;paint(pos()/buf.duration);updTime();raf=requestAnimationFrame(loop)})();
+}
+function stopPlay(){if(src){src.onended=null;try{src.stop()}catch(e){}src.disconnect()}
+  if(playing)offset=pos();playing=false;live=null;cancelAnimationFrame(raf);$('#playBtn').textContent='▶'}
+$('#playBtn').onclick=()=>playing?stopPlay():play();
+$('#stopBtn').onclick=()=>{stopPlay();offset=0;paint(0);updTime()};
+function updTime(){$('#tm').textContent=sel<0?'٠:٠٠ / ٠:٠٠':`${fmt(pos())} / ${fmt(takes[sel].buffer.duration)}`}
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.target.matches('input,button')){e.preventDefault();playing?stopPlay():play()}});
+
+/* ——— export ——— */
+$('#expBtn').onclick=async()=>{
+  if(sel<0)return;const btn=$('#expBtn');btn.disabled=true;$('#msg').textContent='جارٍ تجهيز الملف…';
+  const buf=takes[sel].buffer,tail=Math.max(S.rev>0?S.decay:0,S.echo>0?S.echoT*8:0),dur=buf.duration+tail;
+  const oc=new OfflineAudioContext(2,Math.ceil(dur*buf.sampleRate),buf.sampleRate);
+  const n=buildChain(oc,oc.destination),s=oc.createBufferSource();s.buffer=buf;s.connect(n.input);
+  if(S.fadeIn){n.fade.gain.setValueAtTime(0,0);n.fade.gain.linearRampToValueAtTime(1,Math.min(1.5,buf.duration/4))}
+  if(S.fadeOut){n.fade.gain.setValueAtTime(1,Math.max(0,dur-2.5));n.fade.gain.linearRampToValueAtTime(0,dur)}
+  s.start();const out=await oc.startRendering();
+  const url=URL.createObjectURL(toWav(out)),a=document.createElement('a');
+  a.href=url;a.download=`${takes[sel].name} - مزمار.wav`;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+  $('#msg').textContent='تم تنزيل الملف بالفلاتر.';btn.disabled=false;
+};
+function toWav(b){
+  const ch=b.numberOfChannels,len=b.length,rate=b.sampleRate,data=new DataView(new ArrayBuffer(44+len*ch*2));
+  const w=(o,s)=>[...s].forEach((c,i)=>data.setUint8(o+i,c.charCodeAt(0)));
+  w(0,'RIFF');data.setUint32(4,36+len*ch*2,true);w(8,'WAVE');w(12,'fmt ');data.setUint32(16,16,true);data.setUint16(20,1,true);
+  data.setUint16(22,ch,true);data.setUint32(24,rate,true);data.setUint32(28,rate*ch*2,true);data.setUint16(32,ch*2,true);data.setUint16(34,16,true);
+  w(36,'data');data.setUint32(40,len*ch*2,true);
+  const chans=[...Array(ch)].map((_,i)=>b.getChannelData(i));let o=44,peak=0;
+  for(const c of chans)for(let i=0;i<len;i++)peak=Math.max(peak,Math.abs(c[i]));
+  const k=peak>.98?.98/peak:1;
+  for(let i=0;i<len;i++)for(const c of chans){data.setInt16(o,Math.max(-1,Math.min(1,c[i]*k))*32767,true);o+=2}
+  return new Blob([data],{type:'audio/wav'});
+}
+
+sync(false);renderTakes();drawWave();
+</script>
+</body>
+</html>
