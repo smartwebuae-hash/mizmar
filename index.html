@@ -78,6 +78,13 @@ body.t-dark .marker,body.t-night .marker{color:var(--gold)}
 .rowtools{display:flex;gap:6px;margin-top:8px}
 .rowtools button{border:1px solid var(--line);background:transparent;border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--muted)}
 .rowtools button.marked{color:var(--gold);border-color:var(--gold)}
+@font-face{font-family:'Warsh';font-display:swap;src:
+  url('https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/fonts/warsh-v8-full.woff2') format('woff2'),
+  url('https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/fonts/uthmanic-warsh1-ver08.woff2') format('woff2'),
+  url('https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/fonts/uthmanic-warsh1-ver08-org.ttf') format('truetype')}
+.riw{display:flex;justify-content:center;gap:6px;margin:4px 0 6px}
+.riw button{border:1px solid var(--line);background:transparent;border-radius:999px;padding:4px 14px;font-size:13px;cursor:pointer;color:var(--muted)}
+.riw button.on{background:var(--lapis);border-color:var(--lapis);color:var(--page)}
 /* إخفاء الحروف للمراجعة */
 .w{border-radius:4px;transition:color .25s,background .25s}
 body.h-first .w:not(.ok):not(.peek) .r,
@@ -176,6 +183,12 @@ body.focus .wrap{grid-template-columns:1fr}
 <div class="drawer" id="drawer">
   <h3>إعدادات القراءة</h3>
 
+  <div class="grp"><label>الرواية</label>
+    <div class="seg" data-set="riwaya">
+      <button class="chip" data-v="hafs">حفص عن عاصم</button>
+      <button class="chip" data-v="warsh">ورش عن نافع</button>
+    </div></div>
+
   <div class="grp"><label>طريقة العرض</label>
     <div class="seg" data-set="mode">
       <button class="chip" data-v="mushaf">مصحف متصل</button>
@@ -227,6 +240,9 @@ body.focus .wrap{grid-template-columns:1fr}
       <option value="ar.saoodshuraym">سعود الشريم</option>
       <option value="surah:islam">إسلام صبحي (السورة كاملة)</option>
       <option value="surah:saad">سعد أزويت (السورة كاملة)</option>
+      <option data-r="warsh" value="ea:warsh/warsh_ibrahim_aldosary_128kbps">إبراهيم الدوسري (ورش)</option>
+      <option data-r="warsh" value="ea:warsh/warsh_yassin_al_jazaery_64kbps">ياسين الجزائري (ورش)</option>
+      <option data-r="warsh" value="ea:warsh/warsh_Abdul_Basit_128kbps">عبد الباسط عبد الصمد (ورش)</option>
     </select>
     <label style="margin-top:10px">سرعة التلاوة</label>
     <select class="field" data-set="speed">
@@ -278,7 +294,7 @@ body.focus .wrap{grid-template-columns:1fr}
 
 <script>
 const API='https://api.alquran.cloud/v1';
-const S={mode:'mushaf',theme:'light',font:'Amiri Quran',size:30,lh:23,tafsir:'ar.muyassar',trans:'',reciter:'ar.alafasy',speed:'1',repeat:'1',follow:true,hide:'none',focus:false};
+const S={mode:'mushaf',theme:'light',font:'Amiri Quran',size:30,lh:23,tafsir:'ar.muyassar',trans:'',reciter:'ar.alafasy',speed:'1',repeat:'1',follow:true,hide:'none',focus:false,riwaya:'hafs'};
 let surahs=[],view=null,ayahs=[],marks=[],tab='surah',filt={q:'',type:'all'};
 let cur=-1,rep=0,playing=false;
 const $=s=>document.querySelector(s), audio=$('#audio');
@@ -294,7 +310,7 @@ async function save(k,v){try{if(hasWS)await window.storage.set(k,JSON.stringify(
 function applySettings(){
   document.body.className=(S.theme!=='light'?'t-'+S.theme:'')+(S.hide&&S.hide!=='none'?' h-'+S.hide:'')+(S.focus?' focus':'');
   const r=document.documentElement.style;
-  r.setProperty('--qfont',`'${S.font}'`);r.setProperty('--qsize',S.size+'px');r.setProperty('--qlh',S.lh/10);
+  r.setProperty('--qfont',S.riwaya==='warsh'?`'Warsh','${S.font}'`:`'${S.font}'`);r.setProperty('--qsize',S.size+'px');r.setProperty('--qlh',S.lh/10);
   $('#sizeV').textContent=S.size;audio.playbackRate=+S.speed;
   document.querySelectorAll('[data-set]').forEach(el=>{
     const k=el.dataset.set;
@@ -308,7 +324,13 @@ document.querySelectorAll('[data-set]').forEach(el=>{
   if(el.classList.contains('seg'))el.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;S[k]=b.dataset.v;changed(k)};
   else el.oninput=()=>{S[k]=el.type==='checkbox'?el.checked:(el.type==='range'?+el.value:el.value);changed(k)};
 });
-function changed(k){if(k==='reciter')stopAudio();applySettings();save('settings',S);if(['mode','tafsir','trans'].includes(k)&&view)openView(view.type,view.n,true)}
+const ALL_RECITERS=[...document.querySelectorAll('[data-set="reciter"] option')].map(o=>o.cloneNode(true));
+function fixReciters(){
+  const sel=document.querySelector('[data-set="reciter"]');sel.innerHTML='';
+  ALL_RECITERS.filter(o=>(o.dataset.r||'hafs')===S.riwaya).forEach(o=>sel.appendChild(o.cloneNode(true)));
+  if(![...sel.options].some(o=>o.value===S.reciter))S.reciter=sel.options[0].value;
+}
+function changed(k){if(k==='reciter'||k==='riwaya')stopAudio();if(k==='riwaya')fixReciters();applySettings();save('settings',S);if(['mode','tafsir','trans','riwaya'].includes(k)&&view)openView(view.type,view.n,true)}
 function toggleDrawer(o){$('#drawer').classList.toggle('open',o);$('#scrim').classList.toggle('open',o)}
 function toggleSide(o){$('#side').classList.toggle('open',o);$('#scrim').classList.toggle('open',o)}
 document.addEventListener('keydown',e=>{if(e.target.matches('input,select'))return;
@@ -360,29 +382,41 @@ async function openView(type,n,keep,goto){
     const base=res[0].data;
     ayahs=base.ayahs.map((a,i)=>({...a,surah:a.surah||{number:base.number,name:base.name,englishName:base.englishName,numberOfAyahs:base.numberOfAyahs,revelationType:base.revelationType},
       tafsir:S.tafsir&&S.mode==='ayah'?res[1].data.ayahs[i].text:'',trans:S.trans&&S.mode==='ayah'?res[res.length-1].data.ayahs[i].text:''}));
+    if(S.riwaya==='warsh')await applyWarsh();
     render();save('last',{type,n});
     if(goto){const el=document.querySelector(`[data-s="${ayahs[0].surah.number}"][data-a="${goto}"]`);el&&el.scrollIntoView({block:'center'})}
     else if(!keep)window.scrollTo(0,0);
     if(tab==='surah')drawSurahs();
   }catch(e){R.innerHTML=`<p class="status">تعذّر تحميل الآيات. تأكد من اتصالك بالإنترنت ثم أعد المحاولة.<br><br><button class="ibtn" onclick="openView('${type}',${n})">إعادة المحاولة</button></p>`}
 }
+const warshCache={};
+async function applyWarsh(){
+  const nums=[...new Set(ayahs.map(a=>a.surah.number))];
+  await Promise.all(nums.filter(n=>!warshCache[n]).map(async n=>{
+    const j=await (await fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/editions/ara-quranwarsh/${n}.json`)).json();
+    warshCache[n]={};(j.chapter||[]).forEach(v=>warshCache[n][v.verse]=v.text.trim());
+  }));
+  ayahs.forEach(a=>{const t=warshCache[a.surah.number]&&warshCache[a.surah.number][a.numberInSurah];if(t)a.text=t});
+}
 function stripBasmala(a){
-  if(a.numberInSurah===1&&a.surah.number!==1&&a.surah.number!==9&&a.text.startsWith('بِسْمِ'))return a.text.split(' ').slice(4).join(' ');
+  if(a.numberInSurah===1&&a.surah.number!==1&&a.surah.number!==9&&norm(a.text.split(' ')[0])==='بسم')return a.text.split(' ').slice(4).join(' ');
   return a.text;
 }
 function head(s){
   return `<div class="surah-head"><h2>${s.name}</h2><p>${s.revelationType==='Meccan'?'مكية':'مدنية'} — آياتها ${ar(s.numberOfAyahs)}</p></div>
   ${s.number!==1&&s.number!==9?'<div class="basmala">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>':''}`;
 }
+function setRiwaya(r){if(S.riwaya===r)return;S.riwaya=r;changed('riwaya')}
 function wordsHTML(i,t){
   return t.split(' ').filter(Boolean).map(w=>{
     const k=words.length;words.push({i,n:norm(w)});
-    const m=w.match(/^(.[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]*)(.*)$/su);
+    const m=w.match(/^(.[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u08D3-\u08FF]*)(.*)$/su);
     return `<span class="w" data-w="${k}"><span class="f">${m[1]}</span><span class="r">${m[2]}</span></span>`}).join(' ');
 }
 function render(){words=[];tsPos=0;tsCommit=0;
   const R=$('#reader');let h='',prev=null,block='';
   const title=view.type==='juz'?`الجزء ${ar(view.n)}`:view.type==='page'?`الصفحة ${ar(view.n)}`:'';
+  h+=`<div class="riw"><button class="${S.riwaya==='hafs'?'on':''}" onclick="setRiwaya('hafs')">حفص عن عاصم</button><button class="${S.riwaya==='warsh'?'on':''}" onclick="setRiwaya('warsh')">ورش عن نافع</button></div>`;
   if(title)h+=`<p class="status" style="padding:4px 0 0">${title}</p>`;
   ayahs.forEach((a,i)=>{
     if(a.surah.number!==prev){
@@ -431,12 +465,13 @@ const surahMode=()=>S.reciter.startsWith('surah:');
 const pad3=n=>String(n).padStart(3,'0');
 function src(i,r=0){
   if(surahMode())return SURAH_RECITERS[S.reciter.slice(6)].base+pad3(ayahs[i].surah.number)+'.mp3';
+  if(S.reciter.startsWith('ea:'))return `https://everyayah.com/data/${S.reciter.slice(3)}/${pad3(ayahs[i].surah.number)}${pad3(ayahs[i].numberInSurah)}.mp3`;
   return `https://cdn.islamic.network/quran/audio/${RATES[r]}/${S.reciter}/${ayahs[i].number}.mp3`}
 function firstOf(i){const n=ayahs[i].surah.number;return ayahs.findIndex(a=>a.surah.number===n)}
 function playFrom(i){if(!ayahs.length)return;cur=surahMode()?firstOf(i):i;rep=0;load_(0)}
 function load_(r){audio.dataset.r=r;audio.src=src(cur,r);audio.playbackRate=+S.speed;audio.play().catch(()=>{});playing=true;mark()}
 audio.onerror=()=>{if(cur<0)return;const r=+audio.dataset.r+1;
-  if(!surahMode()&&r<RATES.length)return load_(r);
+  if(!surahMode()&&!S.reciter.startsWith('ea:')&&r<RATES.length)return load_(r);
   playing=false;mark();
   $('#now').innerHTML=surahMode()?`${ayahs[cur].surah.name} غير متوفرة<small>هذه السورة غير مسجلة بصوت هذا القارئ</small>`:'تعذّر تشغيل التلاوة<small>جرّب قارئاً آخر من الإعدادات</small>'};
 function nextSurahIdx(d){const n=ayahs[cur<0?0:cur].surah.number;
@@ -464,7 +499,7 @@ function stopAudio(){audio.pause();audio.removeAttribute('src');cur=-1;playing=f
 
 /* ——— التسميع: تتبّع القراءة بالصوت ——— */
 let words=[],tsPos=0,tsCommit=0,listening=false,recog=null,wantListen=false;
-function norm(w){return w.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g,'')
+function norm(w){return w.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640\u08D3-\u08FF]/g,'')
   .replace(/[ٱأإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/ؤ/g,'و').replace(/ئ/g,'ي').replace(/[^\u0621-\u064A]/g,'')}
 function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;
   for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]}
@@ -542,7 +577,7 @@ function welcome(last){
     <button class="ibtn" onclick="openView('surah',67)">سورة الملك</button></div>`;
 }
 (async()=>{
-  Object.assign(S,await load('settings',{}));marks=await load('marks',[]);applySettings();
+  Object.assign(S,await load('settings',{}));fixReciters();marks=await load('marks',[]);applySettings();
   welcome(await load('last',null));
   try{surahs=(await (await fetch(`${API}/surah`)).json()).data}catch(e){}
   renderSide();
